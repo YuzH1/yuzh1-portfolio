@@ -114,5 +114,7 @@ model Message {
   guestEmail String?
   content    String
   parentId   String?
+  ip         String?  // IP地址
+  location   String?  // IP属地
   createdAt  DateTime @default(now())
 }

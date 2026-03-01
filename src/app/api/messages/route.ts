@@ -1,6 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// 简单的 IP 属地查询（使用免费 API）
+async function getIPLocation(ip: string): Promise<string | null> {
+  try {
+    // 本地 IP 不查询
+    if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+      return '本地'
+    }
+    
+    const res = await fetch(`http://ip-api.com/json/${ip}?lang=zh-CN&fields=status,country,regionName,city`, {
+      signal: AbortSignal.timeout(3000),
+    })
+    const data = await res.json()
+    
+    if (data.status === 'success') {
+      // 返回格式：国家 地区 城市
+      const parts = [data.country, data.regionName, data.city].filter(Boolean)
+      return parts.slice(0, 2).join(' ') || data.country || null
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+// 获取客户端 IP
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for')
+  if (forwarded) {
+    return forwarded.split(',')[0].trim()
+  }
+  return '127.0.0.1'
+}
+
 // GET - 获取留言
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -30,6 +63,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const token = request.cookies.get('session')?.value
   const body = await request.json()
+  const ip = getClientIP(request)
 
   try {
     let userId = null
@@ -50,6 +84,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请输入您的名字' }, { status: 400 })
     }
 
+    // 获取 IP 属地
+    const location = await getIPLocation(ip)
+
     const message = await prisma.message.create({
       data: {
         userId,
@@ -59,6 +96,8 @@ export async function POST(request: NextRequest) {
         projectId: body.projectId || null,
         blogId: body.blogId || null,
         parentId: body.parentId || null,
+        ip,
+        location,
       },
       include: {
         user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },

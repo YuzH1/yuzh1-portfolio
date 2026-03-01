@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { MessageCircle, Send, Trash2, User } from 'lucide-react'
+import { MessageCircle, Send, Trash2, MapPin } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
-import { formatDate } from '@/lib/utils'
 
 interface Message {
   id: string
   content: string
   createdAt: string
+  ip?: string | null
+  location?: string | null
   user?: {
     id: string
     name: string
@@ -27,6 +28,41 @@ interface MessageBoardProps {
   title?: string
 }
 
+// 格式化具体时间
+function formatDateTime(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+// 格式化相对时间
+function formatRelativeTime(date: Date): string {
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  
+  if (days > 7) {
+    return formatDateTime(date)
+  } else if (days > 0) {
+    return `${days}天前`
+  } else if (hours > 0) {
+    return `${hours}小时前`
+  } else if (minutes > 0) {
+    return `${minutes}分钟前`
+  } else if (seconds > 0) {
+    return `${seconds}秒前`
+  }
+  return '刚刚'
+}
+
 export function MessageBoard({ projectId, blogId, title = '留言板' }: MessageBoardProps) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
@@ -34,6 +70,7 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
   const [submitting, setSubmitting] = useState(false)
   const [content, setContent] = useState('')
   const [guestName, setGuestName] = useState('')
+  const [showExactTime, setShowExactTime] = useState<string | null>(null)
 
   useEffect(() => {
     fetchMessages()
@@ -182,13 +219,31 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
                     </span>
                   )}
                   
-                  <span className="text-xs text-gray-500">
-                    {formatDate(new Date(msg.createdAt))}
-                  </span>
+                  {/* IP 属地 */}
+                  {msg.location && (
+                    <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 rounded">
+                      <MapPin className="w-3 h-3" />
+                      {msg.location}
+                    </span>
+                  )}
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">
+                
+                <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap mb-1">
                   {msg.content}
                 </p>
+                
+                {/* 时间 */}
+                <div 
+                  className="text-xs text-gray-400 cursor-pointer hover:text-gray-500"
+                  onClick={() => setShowExactTime(showExactTime === msg.id ? null : msg.id)}
+                  title="点击切换时间格式"
+                >
+                  {showExactTime === msg.id 
+                    ? formatDateTime(new Date(msg.createdAt))
+                    : formatRelativeTime(new Date(msg.createdAt))
+                  }
+                  {showExactTime !== msg.id && <span className="ml-1 opacity-50">点击查看详细时间</span>}
+                </div>
               </div>
 
               {/* 删除按钮（管理员） */}
