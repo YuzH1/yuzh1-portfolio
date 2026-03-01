@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import crypto from 'crypto'
+import * as crypto from 'crypto'
 
 // 简单的密码哈希函数
 const hashPassword = (password: string): string => {
