@@ -5,8 +5,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // 用户表
@@ -96,7 +97,7 @@ model About {
   bilibili  String?
   twitter   String?
   website   String?
-  techStack String?  // JSON数组存储技术栈
+  techStack String?
   updatedAt DateTime @updatedAt
 }
 
