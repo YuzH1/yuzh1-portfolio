@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hash, compare } from 'crypto'
+import crypto from 'crypto'
 
 // 简单的密码哈希函数
-const hashPassword = async (password: string): Promise<string> => {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password + 'yuzh1-salt')
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+const hashPassword = (password: string): string => {
+  return crypto
+    .createHash('sha256')
+    .update(password + 'yuzh1-salt')
+    .digest('hex')
 }
 
 // 生成随机 token
 const generateToken = (): string => {
-  return Array.from(crypto.getRandomValues(new Uint8Array(32)))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
+  return crypto.randomBytes(32).toString('hex')
 }
 
 // GET - 获取当前用户
@@ -55,7 +52,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '该邮箱已被注册' }, { status: 400 })
       }
 
-      const hashedPassword = await hashPassword(password)
+      const hashedPassword = hashPassword(password)
       const user = await prisma.user.create({
         data: {
           email,
@@ -98,7 +95,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '邮箱或密码错误' }, { status: 401 })
       }
 
-      const hashedPassword = await hashPassword(password)
+      const hashedPassword = hashPassword(password)
       if (user.password !== hashedPassword) {
         return NextResponse.json({ error: '邮箱或密码错误' }, { status: 401 })
       }
