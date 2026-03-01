@@ -26,10 +26,10 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+    <html lang="zh-CN" className="dark" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased bg-gray-950`}>
         <AuthProvider>
-          <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
+          <div className="min-h-screen flex flex-col bg-gray-950 transition-colors duration-300">
             <Navbar />
             <main className="flex-1 pt-20">
               {children}
@@ -40,13 +40,8 @@ export default async function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                const theme = localStorage.getItem('theme');
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (theme === 'dark' || (!theme && prefersDark)) {
-                  document.documentElement.classList.add('dark');
-                }
-              } catch {}
+              // 游戏风格固定深色模式
+              document.documentElement.classList.add('dark');
             `,
           }}
         />
