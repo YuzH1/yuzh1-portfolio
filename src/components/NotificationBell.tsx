@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, X, MessageCircle, Check } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
-import { formatRelativeTime } from '@/lib/utils'
 
 interface Notification {
   id: string
@@ -16,6 +15,38 @@ interface Notification {
   createdAt: string
 }
 
+function formatRelativeTime(date: Date): string {
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  
+  if (days > 7) {
+    return formatDateTime(date)
+  } else if (days > 0) {
+    return `${days}天前`
+  } else if (hours > 0) {
+    return `${hours}小时前`
+  } else if (minutes > 0) {
+    return `${minutes}分钟前`
+  } else if (seconds > 0) {
+    return `${seconds}秒前`
+  }
+  return '刚刚'
+}
+
+function formatDateTime(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}`
+}
+
 export function NotificationBell() {
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -25,7 +56,6 @@ export function NotificationBell() {
   useEffect(() => {
     if (user) {
       fetchNotifications()
-      // 每30秒刷新一次
       const interval = setInterval(fetchNotifications, 30000)
       return () => clearInterval(interval)
     }
