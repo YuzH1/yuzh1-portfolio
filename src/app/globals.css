@@ -8,114 +8,88 @@
   }
   
   body {
-    @apply bg-gray-950 text-gray-100;
+    @apply bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100;
   }
   
-  /* 自定义滚动条 - 游戏风格 */
+  /* 自定义滚动条 */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-gray-900;
+    @apply bg-gray-100 dark:bg-gray-900;
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-gradient-to-b from-cyan-500 to-purple-500 rounded-full;
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply from-cyan-400 to-purple-400;
-    box-shadow: 0 0 20px rgba(6, 182, 212, 0.8);
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+  
+  /* 深色模式滚动条 - 游戏风格 */
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-gray-900;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-gradient-to-b from-cyan-500 to-purple-500 rounded-full;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
   }
 }
 
 @layer components {
-  /* 霓虹文字 */
+  /* 霓虹文字 - 仅深色模式 */
   .neon-text {
+    @apply dark:text-cyan-400;
+  }
+  
+  .dark .neon-text {
     text-shadow: 
       0 0 5px currentColor,
       0 0 10px currentColor,
-      0 0 20px currentColor,
-      0 0 40px currentColor;
-  }
-  
-  /* 霓虹边框 */
-  .neon-border {
-    box-shadow: 
-      0 0 5px rgba(6, 182, 212, 0.5),
-      0 0 10px rgba(6, 182, 212, 0.3),
-      inset 0 0 5px rgba(6, 182, 212, 0.1);
-    border: 1px solid rgba(6, 182, 212, 0.5);
-  }
-  
-  /* 玻璃效果 - 游戏风格 */
-  .glass-gaming {
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(6, 182, 212, 0.2);
-  }
-  
-  /* 网格背景 */
-  .grid-bg-gaming {
-    background-image: 
-      linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
-    background-size: 50px 50px;
-  }
-  
-  /* 扫描线效果 */
-  .scanlines::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.1),
-      rgba(0, 0, 0, 0.1) 1px,
-      transparent 1px,
-      transparent 2px
-    );
-    pointer-events: none;
-    opacity: 0.3;
+      0 0 20px currentColor;
   }
   
   /* 游戏卡片 */
   .game-card {
-    @apply relative overflow-hidden;
+    @apply relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-cyan-500/30 rounded-2xl;
+  }
+  
+  .dark .game-card {
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
-    border: 1px solid rgba(6, 182, 212, 0.3);
     box-shadow: 
       0 0 20px rgba(6, 182, 212, 0.1),
       inset 0 0 20px rgba(6, 182, 212, 0.05);
   }
   
-  .game-card:hover {
+  .dark .game-card:hover {
     border-color: rgba(6, 182, 212, 0.6);
     box-shadow: 
       0 0 30px rgba(6, 182, 212, 0.2),
-      0 0 60px rgba(139, 92, 246, 0.1),
-      inset 0 0 30px rgba(6, 182, 212, 0.1);
+      0 0 60px rgba(139, 92, 246, 0.1);
   }
   
   /* 游戏按钮 */
   .game-btn {
-    @apply relative overflow-hidden font-bold tracking-wide uppercase;
+    @apply relative overflow-hidden font-bold tracking-wide uppercase text-white;
     background: linear-gradient(135deg, #06b6d4, #8b5cf6);
     border: none;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+  
+  .game-btn {
     box-shadow: 
       0 0 20px rgba(6, 182, 212, 0.4),
       0 4px 15px rgba(0, 0, 0, 0.3);
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
   }
   
   .game-btn:hover {
     box-shadow: 
       0 0 30px rgba(6, 182, 212, 0.6),
-      0 0 60px rgba(139, 92, 246, 0.4),
-      0 4px 20px rgba(0, 0, 0, 0.4);
+      0 0 60px rgba(139, 92, 246, 0.4);
     transform: translateY(-2px);
   }
   
@@ -132,23 +106,61 @@
     transform: translateX(100%);
   }
   
-  /* 角色标签 - 游戏风格 */
+  /* 玻璃效果 */
+  .glass-gaming {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border border-gray-200 dark:border-cyan-500/20;
+  }
+  
+  /* 网格背景 - 仅深色模式 */
+  .grid-bg-gaming {
+    @apply bg-gray-50 dark:bg-transparent;
+  }
+  
+  .dark .grid-bg-gaming {
+    background-image: 
+      linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  
+  /* 扫描线效果 - 仅深色模式 */
+  .dark .scanlines::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.1),
+      rgba(0, 0, 0, 0.1) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    opacity: 0.3;
+  }
+  
+  /* 角色标签 */
   .tag-admin {
     @apply px-2 py-0.5 text-xs rounded font-bold;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    @apply bg-amber-100 text-amber-700 dark:bg-gradient-to-r dark:from-amber-500 dark:to-orange-500 dark:text-white;
+  }
+  
+  .dark .tag-admin {
     box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
   }
   
   .tag-user {
     @apply px-2 py-0.5 text-xs rounded font-bold;
-    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    @apply bg-blue-100 text-blue-700 dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-500 dark:text-white;
+  }
+  
+  .dark .tag-user {
     box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
   }
   
   .tag-guest {
     @apply px-2 py-0.5 text-xs rounded font-bold;
-    background: linear-gradient(135deg, #6b7280, #4b5563);
+    @apply bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300;
   }
 }
 
@@ -164,19 +176,21 @@
     50% { background-position: 100% 50%; }
   }
   
-  /* 脉冲发光 */
+  /* 脉冲发光 - 仅深色模式 */
   .animate-pulse-glow {
+    @apply dark:animate-pulse;
+  }
+  
+  .dark .animate-pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
   }
   
   @keyframes pulse-glow {
     0%, 100% { 
       box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
-      border-color: rgba(6, 182, 212, 0.5);
     }
     50% { 
       box-shadow: 0 0 40px rgba(6, 182, 212, 0.6), 0 0 60px rgba(139, 92, 246, 0.3);
-      border-color: rgba(6, 182, 212, 0.8);
     }
   }
   
@@ -188,41 +202,5 @@
   @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
-  }
-  
-  /* 闪烁文字 */
-  .text-flicker {
-    animation: flicker 3s linear infinite;
-  }
-  
-  @keyframes flicker {
-    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-      text-shadow: 
-        0 0 5px #06b6d4,
-        0 0 10px #06b6d4,
-        0 0 20px #06b6d4;
-      opacity: 1;
-    }
-    20%, 24%, 55% {
-      text-shadow: none;
-      opacity: 0.8;
-    }
-  }
-  
-  /* 打字机效果 */
-  .typing-effect {
-    overflow: hidden;
-    white-space: nowrap;
-    animation: typing 3s steps(30) infinite, blink-caret 0.75s step-end infinite;
-  }
-  
-  @keyframes typing {
-    from { width: 0 }
-    to { width: 100% }
-  }
-  
-  @keyframes blink-caret {
-    from, to { border-color: transparent }
-    50% { border-color: #06b6d4 }
   }
 }

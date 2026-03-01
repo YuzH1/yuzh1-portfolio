@@ -5,31 +5,45 @@ import { Moon, Sun } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export function ThemeToggle() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark')
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-    // 强制使用深色模式（游戏风格）
-    document.documentElement.classList.add('dark')
+    const saved = localStorage.getItem('theme') as 'light' | 'dark' | null
+    const initial = saved || 'dark' // 默认深色模式（游戏风格）
+    setTheme(initial)
+    document.documentElement.classList.toggle('dark', initial === 'dark')
   }, [])
 
-  // 隐藏主题切换按钮，游戏风格固定深色
-  return null
+  const toggleTheme = () => {
+    const next = theme === 'light' ? 'dark' : 'light'
+    setTheme(next)
+    localStorage.setItem('theme', next)
+    document.documentElement.classList.toggle('dark', next === 'dark')
+  }
 
-  // 如果你想保留切换按钮，取消上面的 return null，使用下面的代码：
-  /*
   if (!mounted) return null
 
   return (
     <motion.button
-      onClick={() => {}}
-      className="relative p-2 rounded-full bg-gray-800 text-cyan-400 border border-cyan-500/30"
+      onClick={toggleTheme}
+      className="relative p-2 rounded-full bg-gray-800 dark:bg-gray-800 border border-cyan-500/30 dark:border-cyan-500/30 hover:border-cyan-400/50 transition-colors"
       whileHover={{ scale: 1.1, boxShadow: '0 0 15px rgba(6, 182, 212, 0.5)' }}
       whileTap={{ scale: 0.9 }}
-      aria-label="游戏模式"
+      aria-label="切换主题"
     >
-      <Moon className="w-5 h-5" />
+      <motion.div
+        initial={false}
+        animate={{ rotate: theme === 'dark' ? 0 : 180 }}
+        transition={{ duration: 0.3 }}
+      >
+        {theme === 'light' ? (
+          <Sun className="w-5 h-5 text-amber-400" />
+        ) : (
+          <Moon className="w-5 h-5 text-cyan-400" />
+        )}
+      </motion.div>
     </motion.button>
   )
-  */
 }
