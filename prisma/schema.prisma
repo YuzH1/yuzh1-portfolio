@@ -12,18 +12,19 @@ datasource db {
 
 // 用户表
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String
-  name      String
-  nickname  String?
-  avatar    String?
-  role      String    @default("user")
-  bio       String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  sessions  Session[]
-  messages  Message[]
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String
+  name         String
+  nickname     String?
+  avatar       String?
+  role         String        @default("user")
+  bio          String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  sessions     Session[]
+  messages     Message[]
+  notifications Notification[]
 }
 
 // 会话表
@@ -103,18 +104,36 @@ model About {
 
 // 留言/评论
 model Message {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   projectId  String?
-  project    Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project    Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   blogId     String?
-  blog       Blog?    @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  blog       Blog?     @relation(fields: [blogId], references: [id], onDelete: Cascade)
   guestName  String?
   guestEmail String?
+  guestPhone String?   // 用于通知游客
   content    String
-  parentId   String?
-  ip         String?  // IP地址
-  location   String?  // IP属地
-  createdAt  DateTime @default(now())
+  parentId   String?   // 回复的留言ID
+  parent     Message?  @relation("MessageReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Message[] @relation("MessageReplies")
+  ip         String?
+  location   String?
+  createdAt  DateTime  @default(now())
+}
+
+// 通知
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String   // 接收通知的用户
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // reply, system, etc.
+  title       String
+  content     String
+  messageId   String?  // 相关留言ID
+  fromUserId  String?  // 发送者用户ID
+  fromName    String?  // 发送者名称（游客回复时使用）
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
