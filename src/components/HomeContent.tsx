@@ -51,50 +51,43 @@ export function HomeContent({ projects, about }: HomePageProps) {
       initial="hidden"
       animate="visible"
     >
-      {/* Hero Section - 游戏风格 */}
+      {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         {/* 动态背景 */}
         <div className="absolute inset-0 -z-10">
-          {/* 网格背景 */}
-          <div className="absolute inset-0 grid-bg-gaming" />
+          {/* 浅色模式背景 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:hidden" />
           
-          {/* 动态光球 */}
-          <motion.div
-            className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-[100px]"
-            animate={{
-              x: [0, 50, 0],
-              y: [0, -30, 0],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]"
-            animate={{
-              x: [0, -50, 0],
-              y: [0, 50, 0],
-              scale: [1, 1.3, 1],
-            }}
-            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="absolute top-1/2 left-1/2 w-64 h-64 bg-pink-500/10 rounded-full blur-[80px]"
-            animate={{
-              scale: [1, 1.5, 1],
-            }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          
-          {/* 扫描线效果 */}
-          <div className="absolute inset-0 scanlines pointer-events-none" />
+          {/* 深色模式背景 */}
+          <div className="hidden dark:block absolute inset-0">
+            <div className="absolute inset-0 grid-bg-gaming" />
+            <motion.div
+              className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-[100px]"
+              animate={{
+                x: [0, 50, 0],
+                y: [0, -30, 0],
+                scale: [1, 1.2, 1],
+              }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]"
+              animate={{
+                x: [0, -50, 0],
+                y: [0, 50, 0],
+                scale: [1, 1.3, 1],
+              }}
+              transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </div>
         </div>
 
         <div className="relative text-center px-6 max-w-5xl mx-auto">
           <motion.div variants={itemVariants} className="mb-6">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-gaming text-cyan-400 text-sm font-medium border border-cyan-500/30">
-              <Zap className="w-4 h-4 animate-pulse" />
-              <span className="text-flicker">WELCOME TO</span>
-              <Star className="w-4 h-4 text-yellow-400" />
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-gray-800 dark:border dark:border-cyan-500/30 text-primary-700 dark:text-cyan-400 text-sm font-medium">
+              <Zap className="w-4 h-4" />
+              <span className="dark:text-flicker">WELCOME TO</span>
+              <Star className="w-4 h-4 text-amber-500 dark:text-yellow-400" />
             </span>
           </motion.div>
 
@@ -102,13 +95,13 @@ export function HomeContent({ projects, about }: HomePageProps) {
             variants={itemVariants}
             className="text-5xl md:text-7xl font-bold mb-6"
           >
-            <span className="text-gray-100">嗨，我是</span>
-            <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient-x"> {about?.nickname || about?.name || 'YuzH1'}</span>
+            <span className="text-gray-900 dark:text-gray-100">嗨，我是</span>
+            <span className="text-primary-600 dark:bg-gradient-to-r dark:from-cyan-400 dark:via-purple-400 dark:to-pink-400 dark:bg-clip-text dark:text-transparent dark:animate-gradient-x"> {about?.nickname || about?.name || 'YuzH1'}</span>
           </motion.h1>
 
           <motion.p
             variants={itemVariants}
-            className="text-xl md:text-2xl text-gray-400 mb-8 max-w-2xl mx-auto"
+            className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto"
           >
             {about?.bio || '一个热爱创造的开发者，专注于将想法变成现实'}
           </motion.p>
@@ -116,7 +109,7 @@ export function HomeContent({ projects, about }: HomePageProps) {
           <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-4">
             <Link href="/projects">
               <motion.button
-                whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(6, 182, 212, 0.5)' }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="game-btn px-8 py-4 rounded-xl flex items-center gap-2"
               >
@@ -128,7 +121,7 @@ export function HomeContent({ projects, about }: HomePageProps) {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-8 py-4 rounded-xl glass-gaming border border-cyan-500/30 text-cyan-400 font-semibold hover:border-cyan-400/50 transition-all"
+                className="px-8 py-4 rounded-xl bg-gray-100 dark:bg-gray-800 dark:border dark:border-cyan-500/30 text-gray-700 dark:text-cyan-400 font-semibold hover:bg-gray-200 dark:hover:border-cyan-400/50 transition-all"
               >
                 了解我
               </motion.button>
@@ -142,9 +135,9 @@ export function HomeContent({ projects, about }: HomePageProps) {
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <div className="w-6 h-10 border-2 border-cyan-500/50 rounded-full flex justify-center pt-2">
+          <div className="w-6 h-10 border-2 border-gray-300 dark:border-cyan-500/50 rounded-full flex justify-center pt-2">
             <motion.div
-              className="w-1.5 h-3 bg-cyan-400 rounded-full"
+              className="w-1.5 h-3 bg-gray-400 dark:bg-cyan-400 rounded-full"
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />
@@ -157,12 +150,10 @@ export function HomeContent({ projects, about }: HomePageProps) {
         <section className="py-20 px-6">
           <div className="max-w-7xl mx-auto">
             <motion.div variants={itemVariants} className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                  ⭐ 精选项目
-                </span>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+                ⭐ 精选项目
               </h2>
-              <p className="text-gray-500 max-w-2xl mx-auto">
+              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
                 这些是我最引以为豪的作品，每一个都代表着我对技术与创意的追求
               </p>
             </motion.div>
@@ -177,15 +168,13 @@ export function HomeContent({ projects, about }: HomePageProps) {
       )}
 
       {/* All Projects */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 bg-gray-50 dark:bg-transparent">
         <div className="max-w-7xl mx-auto">
           <motion.div variants={itemVariants} className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                🎮 所有项目
-              </span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+              🎮 所有项目
             </h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               探索我的项目集合，每一个都是学习与成长的见证
             </p>
           </motion.div>
@@ -202,7 +191,7 @@ export function HomeContent({ projects, about }: HomePageProps) {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-8 py-4 glass-gaming rounded-xl text-cyan-400 font-semibold border border-cyan-500/30 hover:border-cyan-400/50"
+                  className="px-8 py-4 bg-white dark:bg-gray-800 rounded-xl text-gray-700 dark:text-cyan-400 font-semibold border border-gray-200 dark:border-cyan-500/30 hover:border-primary-300 dark:hover:border-cyan-400/50 transition-all"
                 >
                   查看更多项目
                 </motion.button>
@@ -219,19 +208,17 @@ export function HomeContent({ projects, about }: HomePageProps) {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative p-8 md:p-12 rounded-3xl game-card"
+            className="relative p-8 md:p-12 rounded-3xl bg-primary-50 dark:bg-gray-900 dark:border dark:border-cyan-500/30"
           >
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                有想法？一起聊聊！
-              </span>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900 dark:text-white">
+              有想法？一起聊聊！
             </h2>
-            <p className="text-gray-400 mb-8">
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
               无论是项目合作还是单纯交流，我都很乐意倾听你的想法
             </p>
             <Link href="/guestbook">
               <motion.button
-                whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(6, 182, 212, 0.5)' }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="game-btn px-8 py-4 rounded-xl"
               >

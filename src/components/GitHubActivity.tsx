@@ -29,7 +29,6 @@ export function GitHubActivity({ username }: GitHubActivityProps) {
 
   const fetchContributions = async () => {
     try {
-      // 使用 GitHub contributions API
       const res = await fetch(`https://github-contributions-api.deno.dev/${username}.json`)
       
       if (!res.ok) {
@@ -38,13 +37,11 @@ export function GitHubActivity({ username }: GitHubActivityProps) {
       
       const json = await res.json()
       
-      // 计算总贡献
       let total = 0
       json.years?.forEach((year: any) => {
         total += year.total || 0
       })
       
-      // 获取最近一年的数据
       const currentYear = new Date().getFullYear()
       const yearData = json.years?.find((y: any) => y.year === currentYear) || json.years?.[0]
       
@@ -60,7 +57,6 @@ export function GitHubActivity({ username }: GitHubActivityProps) {
     }
   }
 
-  // 获取所有贡献天数
   const getAllDays = (): ContributionDay[] => {
     if (!data?.months) return []
     
@@ -77,32 +73,32 @@ export function GitHubActivity({ username }: GitHubActivityProps) {
     return days
   }
 
-  // 根据贡献数量获取颜色
+  // 根据贡献数量获取颜色 - 浅色模式和深色模式
   const getColor = (count: number): string => {
-    if (count === 0) return 'bg-gray-800/50'
-    if (count < 3) return 'bg-green-900/60'
-    if (count < 6) return 'bg-green-700/70'
-    if (count < 10) return 'bg-green-500/80'
-    return 'bg-green-400'
+    if (count === 0) return 'bg-gray-100 dark:bg-gray-800/50'
+    if (count < 3) return 'bg-green-200 dark:bg-green-900/60'
+    if (count < 6) return 'bg-green-300 dark:bg-green-700/70'
+    if (count < 10) return 'bg-green-400 dark:bg-green-500/80'
+    return 'bg-green-500 dark:bg-green-400'
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-primary-500 dark:border-cyan-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="game-card rounded-2xl p-6 text-center">
+      <div className="bg-white dark:bg-gray-900 dark:border dark:border-cyan-500/30 rounded-2xl p-6 text-center">
         <p className="text-gray-500">GitHub 数据加载失败</p>
         <a 
           href={`https://github.com/${username}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-cyan-400 hover:text-cyan-300 text-sm mt-2 inline-block"
+          className="text-primary-600 dark:text-cyan-400 hover:underline text-sm mt-2 inline-block"
         >
           查看 GitHub 主页 →
         </a>
@@ -116,21 +112,21 @@ export function GitHubActivity({ username }: GitHubActivityProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="game-card rounded-2xl p-6"
+      className="bg-white dark:bg-gray-900 dark:border dark:border-cyan-500/30 rounded-2xl p-6"
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="w-5 h-5 text-gray-700 dark:text-cyan-400" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
           </svg>
-          <span className="font-semibold text-cyan-400">GitHub 贡献</span>
+          <span className="font-semibold text-gray-900 dark:text-cyan-400">GitHub 贡献</span>
         </div>
         <a
           href={`https://github.com/${username}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+          className="text-sm text-primary-600 dark:text-cyan-400 hover:text-primary-700 dark:hover:text-cyan-300 transition-colors"
         >
           @{username}
         </a>
@@ -138,19 +134,19 @@ export function GitHubActivity({ username }: GitHubActivityProps) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="p-3 rounded-xl bg-gray-900/50 border border-cyan-500/20">
-          <div className="text-2xl font-bold text-green-400 neon-text">
+        <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-cyan-500/20">
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
             {data?.total?.toLocaleString() || 0}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
             {new Date().getFullYear()} 年贡献
           </div>
         </div>
-        <div className="p-3 rounded-xl bg-gray-900/50 border border-purple-500/20">
-          <div className="text-2xl font-bold text-purple-400">
+        <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-purple-500/20">
+          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
             {days.filter(d => d.contributionCount > 0).length}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
             活跃天数
           </div>
         </div>
@@ -162,7 +158,7 @@ export function GitHubActivity({ username }: GitHubActivityProps) {
           {days.slice(-365).map((day, index) => (
             <div
               key={day.date || index}
-              className={`w-3 h-3 rounded-sm ${getColor(day.contributionCount)} transition-all hover:scale-125 hover:ring-1 hover:ring-cyan-400/50 cursor-pointer`}
+              className={`w-3 h-3 rounded-sm ${getColor(day.contributionCount)} transition-all hover:scale-125 hover:ring-1 hover:ring-primary-400 dark:hover:ring-cyan-400/50 cursor-pointer`}
               title={`${day.date}: ${day.contributionCount} 次贡献`}
             />
           ))}
@@ -170,14 +166,14 @@ export function GitHubActivity({ username }: GitHubActivityProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-end gap-2 mt-3 text-xs text-gray-500">
+      <div className="flex items-center justify-end gap-2 mt-3 text-xs text-gray-500 dark:text-gray-400">
         <span>Less</span>
         <div className="flex gap-0.5">
-          <div className="w-3 h-3 rounded-sm bg-gray-800/50" />
-          <div className="w-3 h-3 rounded-sm bg-green-900/60" />
-          <div className="w-3 h-3 rounded-sm bg-green-700/70" />
-          <div className="w-3 h-3 rounded-sm bg-green-500/80" />
-          <div className="w-3 h-3 rounded-sm bg-green-400" />
+          <div className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-800/50" />
+          <div className="w-3 h-3 rounded-sm bg-green-200 dark:bg-green-900/60" />
+          <div className="w-3 h-3 rounded-sm bg-green-300 dark:bg-green-700/70" />
+          <div className="w-3 h-3 rounded-sm bg-green-400 dark:bg-green-500/80" />
+          <div className="w-3 h-3 rounded-sm bg-green-500 dark:bg-green-400" />
         </div>
         <span>More</span>
       </div>
