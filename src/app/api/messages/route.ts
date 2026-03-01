@@ -15,7 +15,6 @@ async function getIPLocation(ip: string): Promise<string | null> {
     const data = await res.json()
     
     if (data.status === 'success') {
-      // 返回格式：国家 地区 城市
       const parts = [data.country, data.regionName, data.city].filter(Boolean)
       return parts.slice(0, 2).join(' ') || data.country || null
     }
@@ -55,7 +54,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(messages)
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 })
+    console.error('GET /api/messages error:', error)
+    // 返回空数组而不是错误
+    return NextResponse.json([])
   }
 }
 
@@ -87,24 +88,46 @@ export async function POST(request: NextRequest) {
     // 获取 IP 属地
     const location = await getIPLocation(ip)
 
-    const message = await prisma.message.create({
-      data: {
-        userId,
-        guestName: body.guestName || null,
-        guestEmail: body.guestEmail || null,
-        content: body.content,
-        projectId: body.projectId || null,
-        blogId: body.blogId || null,
-        parentId: body.parentId || null,
-        ip,
-        location,
-      },
-      include: {
-        user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
-      },
-    })
-
-    return NextResponse.json(message)
+    // 尝试创建带 IP 和 location 的留言，如果失败则创建不带这些字段的
+    try {
+      const message = await prisma.message.create({
+        data: {
+          userId,
+          guestName: body.guestName || null,
+          guestEmail: body.guestEmail || null,
+          content: body.content,
+          projectId: body.projectId || null,
+          blogId: body.blogId || null,
+          parentId: body.parentId || null,
+          ip,
+          location,
+        },
+        include: {
+          user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
+        },
+      })
+      return NextResponse.json(message)
+    } catch (createError: any) {
+      // 如果是因为 ip/location 字段不存在，尝试不带这些字段
+      if (createError.code === 'P2021' || createError.message?.includes('column') || createError.message?.includes('does not exist')) {
+        const message = await prisma.message.create({
+          data: {
+            userId,
+            guestName: body.guestName || null,
+            guestEmail: body.guestEmail || null,
+            content: body.content,
+            projectId: body.projectId || null,
+            blogId: body.blogId || null,
+            parentId: body.parentId || null,
+          },
+          include: {
+            user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
+          },
+        })
+        return NextResponse.json(message)
+      }
+      throw createError
+    }
   } catch (error) {
     console.error('Create message error:', error)
     return NextResponse.json({ error: '留言失败，请重试' }, { status: 500 })
