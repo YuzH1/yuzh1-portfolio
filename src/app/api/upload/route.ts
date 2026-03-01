@@ -3,7 +3,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import path from 'path'
 
-// POST - 上传图片
+// POST - 上传图片（Vercel 兼容版本 - 使用 base64 存储）
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -19,34 +19,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '只支持 JPG、PNG、GIF、WebP 格式' }, { status: 400 })
     }
 
-    // 检查文件大小 (最大 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: '文件大小不能超过 5MB' }, { status: 400 })
+    // 检查文件大小 (最大 2MB，因为 base64 会更大)
+    if (file.size > 2 * 1024 * 1024) {
+      return NextResponse.json({ error: '文件大小不能超过 2MB' }, { status: 400 })
     }
 
-    // 生成文件名
-    const ext = file.name.split('.').pop() || 'jpg'
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    
-    // 确保上传目录存在
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads')
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true })
-    }
-
-    // 写入文件
+    // 将文件转换为 base64 data URL
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    const filePath = path.join(uploadDir, fileName)
-    await writeFile(filePath, buffer)
-
-    // 返回可访问的URL
-    const url = `/uploads/${fileName}`
+    const base64 = buffer.toString('base64')
+    const dataUrl = `data:${file.type};base64,${base64}`
     
     return NextResponse.json({ 
       success: true, 
-      url,
-      fileName 
+      url: dataUrl,
+      fileName: file.name 
     })
   } catch (error) {
     console.error('Upload error:', error)
