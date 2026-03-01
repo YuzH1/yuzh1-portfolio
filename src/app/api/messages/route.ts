@@ -1,40 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-function getClientIP(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for')
-  if (forwarded) {
-    return forwarded.split(',')[0].trim()
-  }
-  return '127.0.0.1'
-}
-
-async function getIPLocation(ip: string): Promise<string | null> {
-  try {
-    if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
-      return '本地'
-    }
-    
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 3000)
-    
-    const res = await fetch(`http://ip-api.com/json/${ip}?lang=zh-CN&fields=status,country,regionName,city`, {
-      signal: controller.signal,
-    })
-    clearTimeout(timeoutId)
-    
-    const data = await res.json()
-    
-    if (data.status === 'success') {
-      const parts = [data.country, data.regionName, data.city].filter(Boolean)
-      return parts.slice(0, 2).join(' ') || data.country || null
-    }
-    return null
-  } catch {
-    return null
-  }
-}
-
 // GET - 获取留言
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -45,6 +11,8 @@ export async function GET(request: NextRequest) {
     const where: any = {}
     if (projectId) where.projectId = projectId
     if (blogId) where.blogId = blogId
+    // 只获取顶级留言（没有parentId的）
+    where.parentId = null
 
     const messages = await prisma.message.findMany({
       where,
@@ -71,8 +39,6 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: '无效的请求数据' }, { status: 400 })
   }
-  
-  const ip = getClientIP(request)
 
   try {
     let userId = null
@@ -100,87 +66,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请输入留言内容' }, { status: 400 })
     }
 
-    // 构建留言数据
-    const messageData: any = {
-      userId,
-      guestName: userId ? null : body.guestName,
-      guestEmail: body.guestEmail || null,
-      content: body.content.trim(),
-      projectId: body.projectId || null,
-      blogId: body.blogId || null,
-    }
+    // 最简单的留言数据
+    const message = await prisma.message.create({
+      data: {
+        userId,
+        guestName: userId ? null : body.guestName,
+        content: body.content.trim(),
+        projectId: body.projectId || null,
+        blogId: body.blogId || null,
+      },
+      include: {
+        user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
+      },
+    })
 
-    // 尝试添加可选字段
-    const location = await getIPLocation(ip)
-    
-    // 使用 $executeRaw 来避免 Prisma Client 的字段检查
-    // 这样即使数据库缺少某些字段也能正常工作
-    try {
-      // 先尝试使用完整字段
-      const result = await prisma.$queryRaw`
-        INSERT INTO Message (id, userId, guestName, guestEmail, content, projectId, blogId, ip, location, createdAt)
-        VALUES (
-          LOWER(HEX(RANDOMBLOB(25))),
-          ${userId},
-          ${userId ? null : body.guestName},
-          ${body.guestEmail || null},
-          ${body.content.trim()},
-          ${body.projectId || null},
-          ${body.blogId || null},
-          ${ip},
-          ${location},
-          CURRENT_TIMESTAMP
-        ) RETURNING id
-      `
-      
-      const newId = (result as any[])?.[0]?.id
-      
-      if (newId) {
-        const message = await prisma.message.findUnique({
-          where: { id: newId },
-          include: {
-            user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
-          },
-        })
-        
-        return NextResponse.json(message)
-      }
-    } catch (rawError: any) {
-      console.log('Raw query failed, trying basic insert:', rawError?.message)
-    }
-
-    // 如果上面的方法失败，使用基本的 Prisma create
-    try {
-      const message = await prisma.message.create({
-        data: messageData,
-        include: {
-          user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
-        },
-      })
-      
-      return NextResponse.json(message)
-    } catch (createError: any) {
-      console.error('Prisma create error:', createError?.message)
-      
-      // 最后尝试：不包含任何可选字段
-      const basicMessage = await prisma.message.create({
-        data: {
-          userId,
-          guestName: userId ? null : body.guestName,
-          content: body.content.trim(),
-        },
-        include: {
-          user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
-        },
-      })
-      
-      return NextResponse.json(basicMessage)
-    }
+    return NextResponse.json(message)
   } catch (error: any) {
-    console.error('Create message error:', error?.message || error)
+    console.error('Create message error:', error)
     return NextResponse.json({ 
       error: '留言失败，请稍后重试',
-      details: error?.message 
+      details: error?.message || String(error)
     }, { status: 500 })
   }
 }
