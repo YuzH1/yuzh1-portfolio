@@ -26,9 +26,9 @@ export function ImageUpload({ value, onChange, placeholder = '上传图片' }: I
       return
     }
 
-    // 检查文件大小
-    if (file.size > 5 * 1024 * 1024) {
-      setError('文件大小不能超过 5MB')
+    // 检查文件大小 (最大 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setError('文件大小不能超过 2MB')
       return
     }
 
@@ -78,14 +78,14 @@ export function ImageUpload({ value, onChange, placeholder = '上传图片' }: I
       {value ? (
         // 预览已上传的图片
         <div className="relative group">
-          <div className="relative w-full h-40 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+          <div className="relative w-full max-w-xs h-40 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
             <img
               src={value}
               alt="预览"
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg max-w-xs">
             <button
               type="button"
               onClick={handleRemove}
@@ -94,7 +94,7 @@ export function ImageUpload({ value, onChange, placeholder = '上传图片' }: I
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="mt-1 text-xs text-gray-500 truncate">{value}</div>
+          <div className="mt-1 text-xs text-gray-500">✓ 图片已上传</div>
         </div>
       ) : (
         // 上传按钮
@@ -102,7 +102,7 @@ export function ImageUpload({ value, onChange, placeholder = '上传图片' }: I
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="w-full h-40 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-primary-500 hover:text-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full max-w-xs h-40 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-primary-500 hover:text-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {uploading ? (
             <>
@@ -113,7 +113,7 @@ export function ImageUpload({ value, onChange, placeholder = '上传图片' }: I
             <>
               <Upload className="w-8 h-8" />
               <span>{placeholder}</span>
-              <span className="text-xs text-gray-400">支持 JPG、PNG、GIF、WebP，最大 5MB</span>
+              <span className="text-xs text-gray-400">支持 JPG、PNG、GIF、WebP，最大 2MB</span>
             </>
           )}
         </button>
