@@ -15,9 +15,14 @@ async function getIPLocation(ip: string): Promise<string | null> {
       return '本地'
     }
     
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000)
+    
     const res = await fetch(`http://ip-api.com/json/${ip}?lang=zh-CN&fields=status,country,regionName,city`, {
-      signal: AbortSignal.timeout(3000),
+      signal: controller.signal,
     })
+    clearTimeout(timeoutId)
+    
     const data = await res.json()
     
     if (data.status === 'success') {
@@ -50,8 +55,8 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json(messages)
-  } catch (error) {
-    console.error('GET /api/messages error:', error)
+  } catch (error: any) {
+    console.error('GET /api/messages error:', error?.message || error)
     return NextResponse.json([])
   }
 }
@@ -59,13 +64,21 @@ export async function GET(request: NextRequest) {
 // POST - 创建留言
 export async function POST(request: NextRequest) {
   const token = request.cookies.get('session')?.value
-  const body = await request.json()
+  
+  let body
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: '无效的请求数据' }, { status: 400 })
+  }
+  
   const ip = getClientIP(request)
 
   try {
     let userId = null
-    let userName = body.guestName
+    let userName = body.guestName || '游客'
 
+    // 检查登录状态
     if (token) {
       try {
         const session = await prisma.session.findUnique({
@@ -83,66 +96,96 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请输入您的名字' }, { status: 400 })
     }
 
-    const location = await getIPLocation(ip)
+    if (!body.content || !body.content.trim()) {
+      return NextResponse.json({ error: '请输入留言内容' }, { status: 400 })
+    }
 
+    // 构建留言数据
     const messageData: any = {
       userId,
       guestName: userId ? null : body.guestName,
       guestEmail: body.guestEmail || null,
-      content: body.content,
+      content: body.content.trim(),
       projectId: body.projectId || null,
       blogId: body.blogId || null,
-      ip,
     }
+
+    // 尝试添加可选字段
+    const location = await getIPLocation(ip)
     
-    // 尝试添加 location 字段，如果数据库支持的话
+    // 使用 $executeRaw 来避免 Prisma Client 的字段检查
+    // 这样即使数据库缺少某些字段也能正常工作
     try {
-      messageData.location = location
-    } catch {}
-
-    const message = await prisma.message.create({
-      data: messageData,
-      include: {
-        user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
-      },
-    })
-
-    // 如果是回复，尝试创建通知
-    if (body.parentId) {
-      try {
-        const parentMessage = await prisma.message.findUnique({
-          where: { id: body.parentId },
-          include: { user: true },
+      // 先尝试使用完整字段
+      const result = await prisma.$queryRaw`
+        INSERT INTO Message (id, userId, guestName, guestEmail, content, projectId, blogId, ip, location, createdAt)
+        VALUES (
+          LOWER(HEX(RANDOMBLOB(25))),
+          ${userId},
+          ${userId ? null : body.guestName},
+          ${body.guestEmail || null},
+          ${body.content.trim()},
+          ${body.projectId || null},
+          ${body.blogId || null},
+          ${ip},
+          ${location},
+          CURRENT_TIMESTAMP
+        ) RETURNING id
+      `
+      
+      const newId = (result as any[])?.[0]?.id
+      
+      if (newId) {
+        const message = await prisma.message.findUnique({
+          where: { id: newId },
+          include: {
+            user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
+          },
         })
-
-        if (parentMessage && parentMessage.userId && parentMessage.userId !== userId) {
-          try {
-            await prisma.notification.create({
-              data: {
-                userId: parentMessage.userId,
-                type: 'reply',
-                title: '有人回复了你的留言',
-                content: `${userName} 回复了你：${body.content.substring(0, 50)}...`,
-                messageId: message.id,
-                fromUserId: userId,
-                fromName: userName,
-              },
-            })
-          } catch {
-            // Notification 表可能不存在，忽略错误
-          }
-        }
-      } catch {}
+        
+        return NextResponse.json(message)
+      }
+    } catch (rawError: any) {
+      console.log('Raw query failed, trying basic insert:', rawError?.message)
     }
 
-    return NextResponse.json(message)
-  } catch (error) {
-    console.error('Create message error:', error)
-    return NextResponse.json({ error: '留言失败，请重试' }, { status: 500 })
+    // 如果上面的方法失败，使用基本的 Prisma create
+    try {
+      const message = await prisma.message.create({
+        data: messageData,
+        include: {
+          user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
+        },
+      })
+      
+      return NextResponse.json(message)
+    } catch (createError: any) {
+      console.error('Prisma create error:', createError?.message)
+      
+      // 最后尝试：不包含任何可选字段
+      const basicMessage = await prisma.message.create({
+        data: {
+          userId,
+          guestName: userId ? null : body.guestName,
+          content: body.content.trim(),
+        },
+        include: {
+          user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
+        },
+      })
+      
+      return NextResponse.json(basicMessage)
+    }
+  } catch (error: any) {
+    console.error('Create message error:', error?.message || error)
+    return NextResponse.json({ 
+      error: '留言失败，请稍后重试',
+      details: error?.message 
+    }, { status: 500 })
   }
 }
 
-// DELETE - 删除留言
+// DELETE - 删除留言（仅管理员）
 export async function DELETE(request: NextRequest) {
   const token = request.cookies.get('session')?.value
   const { searchParams } = new URL(request.url)
