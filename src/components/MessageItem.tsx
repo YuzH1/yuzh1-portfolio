@@ -25,7 +25,7 @@ interface MessageItemProps {
   msg: Message
   isReply?: boolean
   user: any
-  onReply: (msgId: string) => void
+  onReply: (msgId: string | null) => void
   isReplyingTo: string | null
   replyContents: Record<string, string>
   onReplyContentChange: (msgId: string, value: string) => void
