@@ -77,27 +77,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请输入留言内容' }, { status: 400 })
     }
 
-    // 获取 IP 地址
+    // 获取 IP 地址（Vercel 环境）
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 
                request.headers.get('x-real-ip') || 
                null
 
-    // IP 属地查询（HTTPS API）
-    let location = null
-    if (ip && ip !== '未知') {
-      try {
-        // 使用 ipapi.com HTTPS API
-        const ipRes = await fetch(`https://ipapi.com/ip_api.php?ip=${ip}&key=free`)
-        if (ipRes.ok) {
-          const ipData = await ipRes.json()
-          if (ipData.city) {
-            location = `${ipData.country_name || ''}${ipData.region || ''}${ipData.city}`
-          }
-        }
-      } catch (e) {
-        console.log('IP 查询失败:', e)
-      }
-    }
+    // IP 属地查询（暂时禁用，避免 HTTPS 问题）
+    const location = null
 
     // 创建留言
     const message = await prisma.message.create({
