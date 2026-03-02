@@ -19,6 +19,7 @@ interface Message {
     role: string
   } | null
   guestName?: string | null
+  guestEmail?: string | null
   replies?: Message[]
 }
 
@@ -60,9 +61,20 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
 
   const handleSubmit = async (e: React.FormEvent, isReply = false, parentId?: string) => {
     e.preventDefault()
-    const text = isReply ? (replyContents[parentId!] || '') : content
+    let text = isReply ? (replyContents[parentId!] || '') : content
     if (!text.trim()) return
     if (!user && !guestName.trim()) return
+
+    // 如果是回复，自动添加@提及
+    if (isReply && parentId) {
+      const parentMsg = messages.flatMap(m => [m, ...(m.replies || [])]).find(m => m.id === parentId)
+      if (parentMsg) {
+        const parentName = parentMsg.user?.nickname || parentMsg.user?.name || parentMsg.guestName || '对方'
+        if (!text.startsWith(`@${parentName}`)) {
+          text = `@${parentName} ${text}`
+        }
+      }
+    }
 
     setSubmitting(true)
     try {

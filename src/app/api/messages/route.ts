@@ -72,7 +72,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请输入留言内容' }, { status: 400 })
     }
 
-    // 最简单的留言数据
+    // 获取 IP 地址
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 
+               request.headers.get('x-real-ip') || 
+               '未知'
+
+    // 简单的 IP 属地查询（可以根据需要替换为真实 API）
+    let location = '未知'
+    try {
+      // 使用 ipapi.co 免费 API（有速率限制）
+      if (ip && ip !== '未知') {
+        const ipRes = await fetch(`http://ip-api.com/json/${ip}?lang=zh-CN`)
+        if (ipRes.ok) {
+          const ipData = await ipRes.json()
+          location = `${ipData.country || ''}${ipData.regionName || ''}${ipData.city || ''}`.replace(/undefined/g, '') || '未知'
+        }
+      }
+    } catch (e) {
+      console.log('IP 查询失败:', e)
+    }
+
+    // 创建留言
     const message = await prisma.message.create({
       data: {
         userId,
@@ -81,11 +101,65 @@ export async function POST(request: NextRequest) {
         projectId: body.projectId || null,
         blogId: body.blogId || null,
         parentId: body.parentId || null,
+        ip: ip || null,
+        location: location || null,
       },
       include: {
         user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
       },
     })
+
+    // 创建通知
+    try {
+      // 如果是回复，通知被回复的人
+      if (body.parentId) {
+        const parentMessage = await prisma.message.findUnique({
+          where: { id: body.parentId },
+          include: { user: true },
+        })
+
+        if (parentMessage) {
+          // 通知父留言的作者
+          if (parentMessage.userId) {
+            await prisma.notification.create({
+              data: {
+                userId: parentMessage.userId,
+                type: 'reply',
+                title: '新回复',
+                content: `${userName} 回复了你的留言`,
+                messageId: message.id,
+                fromUserId: userId || undefined,
+                fromName: userName,
+              },
+            })
+          }
+          // 如果是回复游客，且有邮箱，可以发送邮件通知（待实现）
+        }
+      } else {
+        // 新留言，通知所有管理员
+        const admins = await prisma.user.findMany({
+          where: { role: 'admin' },
+          select: { id: true },
+        })
+
+        for (const admin of admins) {
+          await prisma.notification.create({
+            data: {
+              userId: admin.id,
+              type: 'message',
+              title: '新留言',
+              content: `${userName} 发表了新留言`,
+              messageId: message.id,
+              fromUserId: userId || undefined,
+              fromName: userName,
+            },
+          })
+        }
+      }
+    } catch (e) {
+      console.error('创建通知失败:', e)
+      // 通知失败不影响留言
+    }
 
     return NextResponse.json(message)
   } catch (error: any) {

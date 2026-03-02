@@ -18,6 +18,7 @@ interface Message {
     role: string
   } | null
   guestName?: string | null
+  guestEmail?: string | null
   replies?: Message[]
 }
 
@@ -112,6 +113,14 @@ export function MessageItem({
           ) : (
             <span className="tag-guest">游客</span>
           )}
+          
+          {/* IP 属地 */}
+          {msg.location && msg.location !== '未知' && (
+            <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 rounded">
+              <MapPin className="w-3 h-3" />
+              {msg.location}
+            </span>
+          )}
         </div>
         
         <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap mb-1">
@@ -124,8 +133,8 @@ export function MessageItem({
             {formatRelativeTime(new Date(msg.createdAt))}
           </span>
           
-          {/* 回复按钮 */}
-          {!isReply && user && (
+          {/* 回复按钮 - 所有留言都可以回复 */}
+          {user && (
             <button
               onClick={() => onReply(msg.id)}
               className="text-xs text-primary-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
@@ -137,14 +146,14 @@ export function MessageItem({
         </div>
 
         {/* 回复框 */}
-        {isReplying && !isReply && (
+        {isReplying && (
           <form onSubmit={(e) => onSubmitReply(e, msg.id)} className="mt-3">
             <div className="flex gap-2">
               <input
                 type="text"
                 value={replyValue}
                 onChange={e => onReplyContentChange(msg.id, e.target.value)}
-                placeholder="写下你的回复..."
+                placeholder={`@${msg.user?.nickname || msg.user?.name || msg.guestName} 写下你的回复...`}
                 className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 autoFocus
               />
