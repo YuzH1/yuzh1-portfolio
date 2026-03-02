@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { MessageBoard } from '@/components/MessageBoard'
 
-export default function GuestbookPage() {
+function GuestbookContent() {
   const searchParams = useSearchParams()
   const highlightId = searchParams.get('highlight')
   const [scrolled, setScrolled] = useState(false)
@@ -24,6 +24,12 @@ export default function GuestbookPage() {
   }, [highlightId, scrolled])
 
   return (
+    <MessageBoard title="访客留言" highlightId={highlightId || undefined} />
+  )
+}
+
+export default function GuestbookPage() {
+  return (
     <div className="min-h-screen py-20 px-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -36,8 +42,14 @@ export default function GuestbookPage() {
           </p>
         </div>
 
-        {/* Message Board */}
-        <MessageBoard title="访客留言" highlightId={highlightId || undefined} />
+        {/* Message Board with Suspense */}
+        <Suspense fallback={
+          <div className="flex justify-center py-8">
+            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        }>
+          <GuestbookContent />
+        </Suspense>
       </div>
     </div>
   )
