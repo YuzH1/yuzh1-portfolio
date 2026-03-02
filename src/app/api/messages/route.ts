@@ -40,8 +40,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(messages)
   } catch (error: any) {
-    console.error('GET /api/messages error:', error?.message || error)
-    return NextResponse.json([])
+    console.error('GET /api/messages error:', error)
+    console.error('Error details:', error?.message, error?.meta, error?.code)
+    return NextResponse.json({ 
+      error: '获取留言失败',
+      details: error?.message || String(error)
+    }, { status: 500 })
   }
 }
 
@@ -74,32 +78,34 @@ export async function POST(request: NextRequest) {
       } catch {}
     }
 
-    if (!userId && !body.guestName) {
+    if (!userId && !body.guestName?.trim()) {
       return NextResponse.json({ error: '请输入您的名字' }, { status: 400 })
     }
 
-    if (!body.content || !body.content.trim()) {
+    if (!body.content || typeof body.content !== 'string' || !body.content.trim()) {
       return NextResponse.json({ error: '请输入留言内容' }, { status: 400 })
     }
 
     // 获取 IP 地址
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 
                request.headers.get('x-real-ip') || 
-               '未知'
+               null
 
-    // 简单的 IP 属地查询（可以根据需要替换为真实 API）
-    let location = '未知'
-    try {
-      // 使用 ipapi.co 免费 API（有速率限制）
-      if (ip && ip !== '未知') {
-        const ipRes = await fetch(`http://ip-api.com/json/${ip}?lang=zh-CN`)
+    // IP 属地查询（HTTPS API）
+    let location = null
+    if (ip && ip !== '未知') {
+      try {
+        // 使用 ipapi.com HTTPS API
+        const ipRes = await fetch(`https://ipapi.com/ip_api.php?ip=${ip}&key=free`)
         if (ipRes.ok) {
           const ipData = await ipRes.json()
-          location = `${ipData.country || ''}${ipData.regionName || ''}${ipData.city || ''}`.replace(/undefined/g, '') || '未知'
+          if (ipData.city) {
+            location = `${ipData.country_name || ''}${ipData.region || ''}${ipData.city}`
+          }
         }
+      } catch (e) {
+        console.log('IP 查询失败:', e)
       }
-    } catch (e) {
-      console.log('IP 查询失败:', e)
     }
 
     // 创建留言
