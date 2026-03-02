@@ -145,8 +145,8 @@ export function MessageItem({
           )}
         </div>
 
-        {/* 回复框 */}
-        {isReplying && (
+        {/* 回复框 - 只在当前消息被回复时显示 */}
+        {isReplyingTo === msg.id && (
           <form onSubmit={(e) => onSubmitReply(e, msg.id)} className="mt-3">
             <div className="flex gap-2">
               <input
@@ -219,7 +219,7 @@ export function MessageItem({
                       )}
                     </div>
                     {/* 回复框 - 回复回复 */}
-                    {isReplying && (
+                    {isReplyingTo === reply.id && (
                       <form onSubmit={(e) => onSubmitReply(e, reply.id)} className="mt-2">
                         <div className="flex gap-2">
                           <input
