@@ -53,6 +53,10 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    const unreadCount = await prisma.notification.count({
+      where: { userId: session.userId, isRead: false },
+    })
+
     return NextResponse.json({ notifications: notificationsWithUrl, unreadCount })
   } catch (error) {
     console.error('Get notifications error:', error)
