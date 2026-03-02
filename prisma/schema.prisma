@@ -115,12 +115,13 @@ model Message {
   guestEmail String?
   guestPhone String?   // 用于通知游客
   content    String
-  parentId   String?   // 回复的留言ID
+  parentId   String?   // 回复的留言 ID
   parent     Message?  @relation("MessageReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies    Message[] @relation("MessageReplies")
   ip         String?
   location   String?
   createdAt  DateTime  @default(now())
+  notifications Notification[]
 }
 
 // 通知
@@ -131,8 +132,9 @@ model Notification {
   type        String   // reply, system, etc.
   title       String
   content     String
-  messageId   String?  // 相关留言ID
-  fromUserId  String?  // 发送者用户ID
+  messageId   String?  // 相关留言 ID
+  message     Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  fromUserId  String?  // 发送者用户 ID
   fromName    String?  // 发送者名称（游客回复时使用）
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
