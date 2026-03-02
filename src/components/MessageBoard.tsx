@@ -70,8 +70,8 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
   const [content, setContent] = useState('')
   const [guestName, setGuestName] = useState('')
   const [showExactTime, setShowExactTime] = useState<string | null>(null)
-  const [replyTo, setReplyTo] = useState<Message | null>(null)
-  const [replyContent, setReplyContent] = useState('')
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyContents, setReplyContents] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchMessages()
@@ -95,7 +95,7 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
 
   const handleSubmit = async (e: React.FormEvent, isReply = false, parentId?: string) => {
     e.preventDefault()
-    const text = isReply ? replyContent : content
+    const text = isReply ? (replyContents[parentId!] || '') : content
     if (!text.trim()) return
     if (!user && !guestName.trim()) return
 
@@ -114,14 +114,19 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
       })
 
       if (res.ok) {
-        if (isReply) {
-          setReplyContent('')
-          setReplyTo(null)
+        if (isReply && parentId) {
+          setReplyContents(prev => {
+            const next = { ...prev }
+            delete next[parentId]
+            return next
+          })
+          setReplyingTo(null)
         } else {
           setContent('')
           setGuestName('')
         }
-        fetchMessages()
+        // 等待一下再刷新，确保数据库已保存
+        setTimeout(() => fetchMessages(), 500)
       }
     } finally {
       setSubmitting(false)
@@ -136,7 +141,11 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
     } catch {}
   }
 
-  const MessageItem = ({ msg, isReply = false }: { msg: Message; isReply?: boolean }) => (
+  const MessageItem = ({ msg, isReply = false }: { msg: Message; isReply?: boolean }) => {
+    const isReplying = replyingTo === msg.id
+    const replyValue = replyContents[msg.id] || ''
+    
+    return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -167,11 +176,11 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
             <span className="tag-guest">游客</span>
           )}
           
-          {/* IP 属地 */}
-          {msg.location && (
+          {/* IP 属地 - 如果有 location 或 ip 就显示 */}
+          {(msg.location || msg.ip) && (
             <span className="flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 rounded">
               <MapPin className="w-3 h-3" />
-              {msg.location}
+              {msg.location || msg.ip}
             </span>
           )}
         </div>
@@ -195,7 +204,7 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
           {/* 回复按钮 */}
           {!isReply && user && (
             <button
-              onClick={() => setReplyTo(msg)}
+              onClick={() => setReplyingTo(isReplying ? null : msg.id)}
               className="text-xs text-primary-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
             >
               <Reply className="w-3 h-3" />
@@ -205,26 +214,27 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
         </div>
 
         {/* 回复框 */}
-        {replyTo?.id === msg.id && !isReply && (
+        {isReplying && !isReply && (
           <form onSubmit={(e) => handleSubmit(e, true, msg.id)} className="mt-3">
             <div className="flex gap-2">
               <input
                 type="text"
-                value={replyContent}
-                onChange={e => setReplyContent(e.target.value)}
+                value={replyValue}
+                onChange={e => setReplyContents(prev => ({ ...prev, [msg.id]: e.target.value }))}
                 placeholder="写下你的回复..."
                 className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                autoFocus
               />
               <button
                 type="submit"
-                disabled={submitting || !replyContent.trim()}
+                disabled={submitting || !replyValue.trim()}
                 className="px-3 py-2 bg-primary-500 text-white rounded-lg text-sm hover:bg-primary-600 disabled:opacity-50"
               >
                 发送
               </button>
               <button
                 type="button"
-                onClick={() => { setReplyTo(null); setReplyContent('') }}
+                onClick={() => { setReplyingTo(null); setReplyContents(prev => { const next = { ...prev }; delete next[msg.id]; return next }) }}
                 className="p-2 text-gray-400 hover:text-gray-600"
               >
                 <X className="w-4 h-4" />
@@ -253,7 +263,7 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
         </button>
       )}
     </motion.div>
-  )
+  )}
 
   return (
     <div className="bg-white dark:bg-gray-900 dark:border dark:border-cyan-500/30 rounded-2xl p-6 shadow-lg">
