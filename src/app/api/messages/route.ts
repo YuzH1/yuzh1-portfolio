@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     // 只获取顶级留言（没有parentId的）
     where.parentId = null
 
-    // 获取顶级留言和第一层回复
+    // 获取顶级留言和第一层回复（包含回复的回复）
     const messages = await prisma.message.findMany({
       where,
       include: {
@@ -22,6 +22,12 @@ export async function GET(request: NextRequest) {
         replies: {
           include: {
             user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
+            replies: {
+              include: {
+                user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
+              },
+              orderBy: { createdAt: 'asc' },
+            },
           },
           orderBy: { createdAt: 'asc' },
         },

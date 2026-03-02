@@ -19,7 +19,7 @@ interface Message {
   } | null
   guestName?: string | null
   guestEmail?: string | null
-  replies?: Message[]
+  replies?: Message[]  // 第一层回复
 }
 
 interface MessageItemProps {
@@ -178,86 +178,172 @@ export function MessageItem({
         {/* 子回复列表 - 平铺显示，不嵌套 */}
         {msg.replies && msg.replies.length > 0 && (
           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <div className="space-y-2">
+            <div className="space-y-3">
               {msg.replies.map(reply => {
                 const replyReplyValue = replyContents[reply.id] || ''
                 return (
-                <div
-                  key={reply.id}
-                  className="flex gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-lg"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
-                    {reply.user?.avatar ? (
-                      <img src={reply.user.avatar} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      (reply.user?.nickname || reply.user?.name || reply.guestName || '?')[0].toUpperCase()
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                      <span className="font-medium text-gray-900 dark:text-white text-sm">
-                        {reply.user?.nickname || reply.user?.name || reply.guestName}
-                      </span>
-                      {reply.user?.role === 'admin' && (
-                        <span className="tag-admin text-xs">管理员</span>
+                <div key={reply.id}>
+                  {/* 一级回复 */}
+                  <div className="flex gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-lg">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
+                      {reply.user?.avatar ? (
+                        <img src={reply.user.avatar} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        (reply.user?.nickname || reply.user?.name || reply.guestName || '?')[0].toUpperCase()
                       )}
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">
-                      {reply.content}
-                    </p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-gray-400">
-                        {formatRelativeTime(new Date(reply.createdAt))}
-                      </span>
-                      {/* 回复按钮 - 点击回复这条回复 */}
-                      {user && (
-                        <button
-                          onClick={() => onReply(reply.id)}
-                          className="text-xs text-primary-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <span className="font-medium text-gray-900 dark:text-white text-sm">
+                          {reply.user?.nickname || reply.user?.name || reply.guestName}
+                        </span>
+                        {reply.user?.role === 'admin' && (
+                          <span className="tag-admin text-xs">管理员</span>
+                        )}
+                      </div>
+                      <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">
+                        {reply.content}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs text-gray-400">
+                          {formatRelativeTime(new Date(reply.createdAt))}
+                        </span>
+                        {/* 回复按钮 - 点击回复这条回复 */}
+                        {user && (
+                          <button
+                            onClick={() => onReply(reply.id)}
+                            className="text-xs text-primary-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
+                          >
+                            <Reply className="w-3 h-3" />
+                            回复
+                          </button>
+                        )}
+                      </div>
+                      {/* 回复框 - 回复回复 */}
+                      {isReplyingTo === reply.id && (
+                        <form onSubmit={(e) => onSubmitReply(e, reply.id)} className="mt-2">
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={replyReplyValue}
+                              onChange={e => onReplyContentChange(reply.id, e.target.value)}
+                              placeholder={`@${reply.user?.nickname || reply.user?.name || reply.guestName} 写下你的回复...`}
+                              className="flex-1 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                              autoFocus
+                            />
+                            <button
+                              type="submit"
+                              disabled={submitting || !replyReplyValue.trim()}
+                              className="px-2 py-1.5 bg-primary-500 text-white rounded text-xs hover:bg-primary-600 disabled:opacity-50"
+                            >
+                              发送
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onReply(null)}
+                              className="p-1 text-gray-400 hover:text-gray-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
+                    {/* 删除按钮（管理员） */}
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={() => onDelete(reply.id)}
+                        className="p-1 text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* 二级回复（回复的回复） */}
+                  {reply.replies && reply.replies.length > 0 && (
+                    <div className="mt-2 ml-10 space-y-2">
+                      {reply.replies.map(replyReply => (
+                        <div
+                          key={replyReply.id}
+                          className="flex gap-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
                         >
-                          <Reply className="w-3 h-3" />
-                          回复
-                        </button>
-                      )}
-                    </div>
-                    {/* 回复框 - 回复回复 */}
-                    {isReplyingTo === reply.id && (
-                      <form onSubmit={(e) => onSubmitReply(e, reply.id)} className="mt-2">
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={replyReplyValue}
-                            onChange={e => onReplyContentChange(reply.id, e.target.value)}
-                            placeholder={`@${reply.user?.nickname || reply.user?.name || reply.guestName} 写下你的回复...`}
-                            className="flex-1 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                            autoFocus
-                          />
-                          <button
-                            type="submit"
-                            disabled={submitting || !replyReplyValue.trim()}
-                            className="px-2 py-1.5 bg-primary-500 text-white rounded text-xs hover:bg-primary-600 disabled:opacity-50"
-                          >
-                            发送
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onReply(null)}
-                            className="p-1 text-gray-400 hover:text-gray-600"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent-500 to-primary-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
+                            {replyReply.user?.avatar ? (
+                              <img src={replyReply.user.avatar} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              (replyReply.user?.nickname || replyReply.user?.name || replyReply.guestName || '?')[0].toUpperCase()
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                              <span className="font-medium text-gray-900 dark:text-white text-xs">
+                                {replyReply.user?.nickname || replyReply.user?.name || replyReply.guestName}
+                              </span>
+                              {replyReply.user?.role === 'admin' && (
+                                <span className="tag-admin text-xs">管理员</span>
+                              )}
+                            </div>
+                            <p className="text-gray-700 dark:text-gray-300 text-xs whitespace-pre-wrap">
+                              {replyReply.content}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-xs text-gray-400">
+                                {formatRelativeTime(new Date(replyReply.createdAt))}
+                              </span>
+                              {/* 回复按钮 - 点击回复二级回复 */}
+                              {user && (
+                                <button
+                                  onClick={() => onReply(replyReply.id)}
+                                  className="text-xs text-primary-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
+                                >
+                                  <Reply className="w-3 h-3" />
+                                  回复
+                                </button>
+                              )}
+                            </div>
+                            {/* 回复框 - 回复二级回复 */}
+                            {isReplyingTo === replyReply.id && (
+                              <form onSubmit={(e) => onSubmitReply(e, replyReply.id)} className="mt-2">
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    value={replyContents[replyReply.id] || ''}
+                                    onChange={e => onReplyContentChange(replyReply.id, e.target.value)}
+                                    placeholder={`@${replyReply.user?.nickname || replyReply.user?.name || replyReply.guestName} 写下你的回复...`}
+                                    className="flex-1 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    autoFocus
+                                  />
+                                  <button
+                                    type="submit"
+                                    disabled={submitting || !(replyContents[replyReply.id] || '').trim()}
+                                    className="px-2 py-1.5 bg-primary-500 text-white rounded text-xs hover:bg-primary-600 disabled:opacity-50"
+                                  >
+                                    发送
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => onReply(null)}
+                                    className="p-1 text-gray-400 hover:text-gray-600"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </form>
+                            )}
+                          </div>
+                          {/* 删除按钮（管理员） */}
+                          {user?.role === 'admin' && (
+                            <button
+                              onClick={() => onDelete(replyReply.id)}
+                              className="p-1 text-gray-400 hover:text-red-500"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
                         </div>
-                      </form>
-                    )}
-                  </div>
-                  {/* 删除按钮（管理员） */}
-                  {user?.role === 'admin' && (
-                    <button
-                      onClick={() => onDelete(reply.id)}
-                      className="p-1 text-gray-400 hover:text-red-500"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                      ))}
+                    </div>
                   )}
                 </div>
               )})}
