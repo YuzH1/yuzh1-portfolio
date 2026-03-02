@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, X, MessageCircle, Check } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
+import { MessageDetailModal } from './MessageDetailModal'
 
 interface Notification {
   id: string
@@ -55,6 +56,7 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen] = useState(false)
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -105,9 +107,9 @@ export function NotificationBell() {
       console.error('Mark read error:', error)
     }
 
-    // 跳转到对应页面
-    if (notification.url) {
-      window.location.href = notification.url
+    // 显示留言详情弹窗
+    if (notification.messageId) {
+      setSelectedMessageId(notification.messageId)
     }
   }
 
@@ -191,6 +193,14 @@ export function NotificationBell() {
           </>
         )}
       </AnimatePresence>
+
+      {/* 留言详情弹窗 */}
+      {selectedMessageId && (
+        <MessageDetailModal
+          messageId={selectedMessageId}
+          onClose={() => setSelectedMessageId(null)}
+        />
+      )}
     </div>
   )
 }

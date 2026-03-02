@@ -70,11 +70,12 @@ export function ReplyItem({
   highlightId,
 }: ReplyItemProps) {
   const [showReplyReplies, setShowReplyReplies] = useState(false)
-  const replyReplyValue = replyContents[reply.id] || ''
   const replyReplyCount = reply.replies?.length || 0
   
   // 检查是否需要高亮
   const isHighlighted = highlightId === reply.id
+  const isReplyingToThisReply = isReplyingTo === reply.id
+  const replyInputValue = replyContents[reply.id] || ''
 
   return (
     <div className="mt-2 ml-10">
@@ -122,12 +123,12 @@ export function ReplyItem({
             )}
           </div>
           {/* 回复框 */}
-          {isReplyingTo === reply.id && (
+          {isReplyingToThisReply && (
             <form onSubmit={(e) => onSubmitReply(e, reply.id)} className="mt-2">
               <div className="flex gap-2">
                 <input
                   type="text"
-                  value={replyReplyValue}
+                  value={replyInputValue}
                   onChange={e => onReplyContentChange(reply.id, e.target.value)}
                   placeholder={`@${reply.user?.nickname || reply.user?.name || reply.guestName} 写下你的回复...`}
                   className="flex-1 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -135,7 +136,7 @@ export function ReplyItem({
                 />
                 <button
                   type="submit"
-                  disabled={submitting || !replyReplyValue.trim()}
+                  disabled={submitting || !replyInputValue.trim()}
                   className="px-2 py-1.5 bg-primary-500 text-white rounded text-xs hover:bg-primary-600 disabled:opacity-50"
                 >
                   发送
@@ -190,7 +191,7 @@ export function ReplyItem({
       {showReplyReplies && reply.replies && reply.replies.length > 0 && (
         <div className="space-y-2 ml-8">
           {reply.replies.map(replyReply => {
-            const isReplyingReply = isReplyingTo === replyReply.id
+            const isReplyingToThisReplyReply = isReplyingTo === replyReply.id
             const replyReplyInputValue = replyContents[replyReply.id] || ''
             const isReplyHighlighted = highlightId === replyReply.id
             return (
@@ -238,7 +239,7 @@ export function ReplyItem({
                     )}
                   </div>
                   {/* 回复框 */}
-                  {isReplyingReply && (
+                  {isReplyingToThisReplyReply && (
                     <form onSubmit={(e) => onSubmitReply(e, replyReply.id)} className="mt-2">
                       <div className="flex gap-2">
                         <input
