@@ -179,7 +179,9 @@ export function MessageItem({
         {msg.replies && msg.replies.length > 0 && (
           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
             <div className="space-y-2">
-              {msg.replies.map(reply => (
+              {msg.replies.map(reply => {
+                const replyReplyValue = replyContents[reply.id] || ''
+                return (
                 <div
                   key={reply.id}
                   className="flex gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-lg"
@@ -224,7 +226,7 @@ export function MessageItem({
                         <div className="flex gap-2">
                           <input
                             type="text"
-                            value={replyValue}
+                            value={replyReplyValue}
                             onChange={e => onReplyContentChange(reply.id, e.target.value)}
                             placeholder={`@${reply.user?.nickname || reply.user?.name || reply.guestName} 写下你的回复...`}
                             className="flex-1 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -232,7 +234,7 @@ export function MessageItem({
                           />
                           <button
                             type="submit"
-                            disabled={submitting || !replyValue.trim()}
+                            disabled={submitting || !replyReplyValue.trim()}
                             className="px-2 py-1.5 bg-primary-500 text-white rounded text-xs hover:bg-primary-600 disabled:opacity-50"
                           >
                             发送
@@ -258,7 +260,7 @@ export function MessageItem({
                     </button>
                   )}
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         )}
