@@ -18,6 +18,12 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
+        replies: {
+          include: {
+            user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -74,6 +80,7 @@ export async function POST(request: NextRequest) {
         content: body.content.trim(),
         projectId: body.projectId || null,
         blogId: body.blogId || null,
+        parentId: body.parentId || null,
       },
       include: {
         user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
