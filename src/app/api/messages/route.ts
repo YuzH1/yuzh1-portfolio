@@ -18,12 +18,6 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
-        replies: {
-          include: {
-            user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
-          },
-          orderBy: { createdAt: 'asc' },
-        },
       },
       orderBy: { createdAt: 'desc' },
     })
