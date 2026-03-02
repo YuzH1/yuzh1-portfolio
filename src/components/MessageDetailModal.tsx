@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, MapPin, MessageCircle, LogOut, ChevronRight } from 'lucide-react'
+import { X, MapPin, MessageCircle, LogOut } from 'lucide-react'
 
 interface MessageDetail {
   id: string
@@ -38,24 +38,36 @@ export function MessageDetailModal({ messageId, onClose }: MessageDetailModalPro
   const [message, setMessage] = useState<MessageDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    console.log('Fetching message:', messageId)
+    
     // 获取留言详情
     const fetchMessage = async () => {
       try {
+        setError(null)
         const res = await fetch(`/api/messages/${messageId}`)
-        if (res.ok) {
-          const data = await res.json()
-          setMessage(data)
+        console.log('Response status:', res.status)
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
         }
-      } catch (error) {
+        
+        const data = await res.json()
+        console.log('Message data:', data)
+        setMessage(data)
+      } catch (error: any) {
         console.error('Fetch message error:', error)
+        setError(error.message || '获取留言失败')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchMessage()
+    if (messageId) {
+      fetchMessage()
+    }
 
     // 点击 ESC 关闭
     const handleEsc = (e: KeyboardEvent) => {
@@ -80,49 +92,62 @@ export function MessageDetailModal({ messageId, onClose }: MessageDetailModalPro
   return (
     <>
       <AnimatePresence>
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* 背景遮罩 */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleRequestClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
           />
 
-          {/* 弹窗内容 */}
+          {/* 弹窗内容 - 使用绝对定位确保居中 */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
+            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="relative w-full max-w-3xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+            style={{ 
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
           >
             {/* 头部 */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-primary-500 dark:text-cyan-400" />
+            <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary-500/10 to-accent-500/10 flex-shrink-0">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <MessageCircle className="w-6 h-6 text-primary-500 dark:text-cyan-400" />
                 留言详情
               </h3>
               <button
                 onClick={handleRequestClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 title="关闭"
               >
-                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
             </div>
 
             {/* 内容区域 - 可滚动 */}
             <div className="flex-1 overflow-y-auto p-6">
               {loading ? (
-                <div className="flex justify-center py-12">
-                  <div className="w-10 h-10 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-gray-500 dark:text-gray-400 mt-4 text-sm">正在加载留言...</p>
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center py-16 text-red-500 dark:text-red-400">
+                  <X className="w-12 h-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium">加载失败</p>
+                  <p className="text-sm mt-2 opacity-70">{error}</p>
                 </div>
               ) : message ? (
                 <div className="space-y-6">
                   {/* 留言内容 */}
-                  <div className="flex gap-4 p-5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-lg">
+                  <div className="flex gap-4 p-5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-bold text-xl flex-shrink-0 shadow-lg">
                       {message.user?.avatar ? (
                         <img src={message.user.avatar} alt="" className="w-full h-full object-cover rounded-full" />
                       ) : (
@@ -161,7 +186,7 @@ export function MessageDetailModal({ messageId, onClose }: MessageDetailModalPro
                       <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
                         <MessageCircle className="w-4 h-4 text-primary-500 dark:text-cyan-400" />
                         全部回复
-                        <span className="px-2 py-0.5 bg-primary-100 dark:bg-cyan-900/30 text-primary-600 dark:text-cyan-400 text-xs rounded-full">
+                        <span className="px-2 py-0.5 bg-primary-100 dark:bg-cyan-900/30 text-primary-600 dark:text-cyan-400 text-xs rounded-full font-medium">
                           {message.replies.length}
                         </span>
                       </h4>
@@ -207,29 +232,30 @@ export function MessageDetailModal({ messageId, onClose }: MessageDetailModalPro
                   )}
 
                   {/* 无回复提示 */}
-                  {!message.replies || message.replies.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                      <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                      <p className="text-sm">暂无回复，快来抢沙发吧~</p>
+                  {(!message.replies || message.replies.length === 0) && (
+                    <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+                      <MessageCircle className="w-14 h-14 mx-auto mb-4 opacity-20" />
+                      <p className="text-base font-medium">暂无回复</p>
+                      <p className="text-sm mt-2 opacity-70">快来抢沙发吧~</p>
                     </div>
-                  ) : null}
+                  )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+                <div className="flex flex-col items-center justify-center py-16 text-gray-500 dark:text-gray-400">
                   <MessageCircle className="w-16 h-16 mb-4 opacity-20" />
-                  <p className="text-lg font-medium">留言不存在或已被删除</p>
-                  <p className="text-sm mt-2">该留言可能已被作者删除</p>
+                  <p className="text-lg font-medium">留言不存在</p>
+                  <p className="text-sm mt-2 opacity-70">该留言可能已被删除</p>
                 </div>
               )}
             </div>
 
             {/* 底部操作栏 */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
+            <div className="p-5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
               <button
                 onClick={handleRequestClose}
-                className="w-full py-3 bg-gradient-to-r from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-600 text-white font-medium rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-gradient-to-r from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-600 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-5 h-5" />
                 关闭
               </button>
             </div>
@@ -240,19 +266,19 @@ export function MessageDetailModal({ messageId, onClose }: MessageDetailModalPro
       {/* 确认关闭弹窗 */}
       <AnimatePresence>
         {showConfirm && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowConfirm(false)}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700"
             >
               <div className="p-6">
                 <div className="flex items-center gap-4 mb-4">
