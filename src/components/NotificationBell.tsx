@@ -13,6 +13,8 @@ interface Notification {
   fromName: string | null
   isRead: boolean
   createdAt: string
+  url?: string
+  messageId?: string
 }
 
 function formatRelativeTime(date: Date): string {
@@ -86,6 +88,28 @@ export function NotificationBell() {
     }
   }
 
+  const handleNotificationClick = async (notification: Notification) => {
+    // 标记为已读
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: notification.id }),
+      })
+      setNotifications(prev => prev.map(n => 
+        n.id === notification.id ? { ...n, isRead: true } : n
+      ))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    } catch (error) {
+      console.error('Mark read error:', error)
+    }
+
+    // 跳转到对应页面
+    if (notification.url) {
+      window.location.href = notification.url
+    }
+  }
+
   if (!user) return null
 
   return (
@@ -137,7 +161,8 @@ export function NotificationBell() {
                   {notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer ${
                         !notification.isRead ? 'bg-primary-50 dark:bg-cyan-500/5' : ''
                       }`}
                     >

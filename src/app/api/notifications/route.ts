@@ -22,15 +22,38 @@ export async function GET(request: NextRequest) {
 
     const notifications = await prisma.notification.findMany({
       where: { userId: session.userId },
+      include: {
+        message: {
+          select: {
+            id: true,
+            projectId: true,
+            blogId: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
       take: 50,
     })
 
-    const unreadCount = await prisma.notification.count({
-      where: { userId: session.userId, isRead: false },
+    // 为每个通知生成跳转 URL
+    const notificationsWithUrl = notifications.map(n => {
+      let url = '/'
+      if (n.message) {
+        if (n.message.projectId) {
+          url = `/projects/${n.message.projectId}`
+        } else if (n.message.blogId) {
+          url = `/blog/${n.message.blogId}`
+        } else {
+          url = '/guestbook'
+        }
+      }
+      return {
+        ...n,
+        url,
+      }
     })
 
-    return NextResponse.json({ notifications, unreadCount })
+    return NextResponse.json({ notifications: notificationsWithUrl, unreadCount })
   } catch (error) {
     console.error('Get notifications error:', error)
     return NextResponse.json({ notifications: [], unreadCount: 0 })
