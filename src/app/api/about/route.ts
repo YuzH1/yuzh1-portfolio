@@ -52,9 +52,18 @@ export async function PUT(request: NextRequest) {
     })
     
     console.log('Upsert result:', about)
-    return NextResponse.json(about)
-  } catch (error) {
+    return NextResponse.json({ success: true, data: about })
+  } catch (error: any) {
     console.error('PUT /api/about error:', error)
-    return NextResponse.json({ error: 'Failed to update about', details: String(error) }, { status: 500 })
+    console.error('Error details:', error?.message, error?.code, error?.meta)
+    return NextResponse.json({ 
+      error: 'Failed to update about', 
+      details: error?.message || String(error)
+    }, { status: 500 })
   }
+}
+
+// OPTIONS - 处理 CORS 预检请求
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204 })
 }
