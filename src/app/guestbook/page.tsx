@@ -1,26 +1,27 @@
-import { prisma } from '@/lib/prisma'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { MessageBoard } from '@/components/MessageBoard'
 
-export const revalidate = 60
+export default function GuestbookPage() {
+  const searchParams = useSearchParams()
+  const highlightId = searchParams.get('highlight')
+  const [scrolled, setScrolled] = useState(false)
 
-export default async function GuestbookPage() {
-  let messages: any[] = []
-
-  try {
-    messages = await prisma.message.findMany({
-      where: {
-        projectId: null,
-        blogId: null,
-      },
-      include: {
-        user: { select: { id: true, name: true, nickname: true, avatar: true, role: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    })
-  } catch {
-    console.log('Database not initialized yet')
-  }
+  useEffect(() => {
+    if (highlightId && !scrolled) {
+      // 等待 DOM 渲染后滚动到高亮元素
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`message-${highlightId}`)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          setScrolled(true)
+        }
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [highlightId, scrolled])
 
   return (
     <div className="min-h-screen py-20 px-6">
@@ -36,7 +37,7 @@ export default async function GuestbookPage() {
         </div>
 
         {/* Message Board */}
-        <MessageBoard title="访客留言" />
+        <MessageBoard title="访客留言" highlightId={highlightId || undefined} />
       </div>
     </div>
   )

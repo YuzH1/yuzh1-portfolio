@@ -35,6 +35,7 @@ interface MessageItemProps {
   onSubmitReply: (e: React.FormEvent, parentId: string) => void
   submitting: boolean
   onDelete: (id: string) => void
+  highlightId?: string  // 要高亮的留言 ID
 }
 
 function formatRelativeTime(date: Date): string {
@@ -81,18 +82,29 @@ export function MessageItem({
   onSubmitReply,
   submitting,
   onDelete,
+  highlightId,
 }: MessageItemProps) {
   const [showReplies, setShowReplies] = useState(false)
   
   const isReplying = isReplyingTo === msg.id
   const replyValue = replyContents[msg.id] || ''
   const replyCount = msg.replies?.length || 0
+  
+  // 检查是否需要高亮
+  const isHighlighted = highlightId === msg.id
 
   return (
     <motion.div
+      id={`message-${msg.id}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`flex gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg ${isReply ? 'ml-12 mt-2' : ''}`}
+      className={`flex gap-3 p-3 rounded-lg transition-all duration-500 ${
+        isHighlighted 
+          ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-500 shadow-lg scale-[1.02]' 
+          : isReply 
+            ? 'ml-12 mt-2 bg-gray-50 dark:bg-gray-800'
+            : 'bg-gray-50 dark:bg-gray-800'
+      }`}
     >
       {/* 头像 */}
       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-medium flex-shrink-0 overflow-hidden">

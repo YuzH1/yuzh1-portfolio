@@ -38,18 +38,22 @@ export async function GET(request: NextRequest) {
     // 为每个通知生成跳转 URL
     const notificationsWithUrl = notifications.map(n => {
       let url = '/'
+      let messageId = n.messageId
+      let highlightId = n.messageId
+      
       if (n.message) {
         if (n.message.projectId) {
-          url = `/projects/${n.message.projectId}`
+          url = `/projects/${n.message.projectId}?highlight=${messageId}`
         } else if (n.message.blogId) {
-          url = `/blog/${n.message.blogId}`
+          url = `/blog/${n.message.blogId}?highlight=${messageId}`
         } else {
-          url = '/guestbook'
+          url = `/guestbook?highlight=${messageId}`
         }
       }
       return {
         ...n,
         url,
+        highlightId,
       }
     })
 

@@ -27,9 +27,10 @@ interface MessageBoardProps {
   projectId?: string
   blogId?: string
   title?: string
+  highlightId?: string  // 要高亮的留言 ID
 }
 
-export function MessageBoard({ projectId, blogId, title = '留言板' }: MessageBoardProps) {
+export function MessageBoard({ projectId, blogId, title = '留言板', highlightId }: MessageBoardProps) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
@@ -195,6 +196,7 @@ export function MessageBoard({ projectId, blogId, title = '留言板' }: Message
               onSubmitReply={handleSubmitReply}
               submitting={submitting}
               onDelete={handleDelete}
+              highlightId={highlightId}
             />
           ))
         )}

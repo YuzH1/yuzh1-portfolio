@@ -15,6 +15,7 @@ interface Notification {
   createdAt: string
   url?: string
   messageId?: string
+  highlightId?: string
 }
 
 function formatRelativeTime(date: Date): string {
