@@ -20,7 +20,7 @@ interface Message {
   } | null
   guestName?: string | null
   guestEmail?: string | null
-  replies?: Message[]
+  replies?: Message[]  // 只有一层回复
 }
 
 interface MessageBoardProps {
